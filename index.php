@@ -1,275 +1,299 @@
 <?php
-// index.php - LANDING PAGE UTAMA
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+/**
+ * Homepage - Sakinah Style
+ * Features: Hero Section, Hype Products, Clearance Products
+ */
 
-session_start();
-
-// Include configuration
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/functions.php';
 
-// Set page metadata
-$page_title = "HijabStore - Marketplace Kerudung Terlengkap";
-$page_description = "Temukan koleksi kerudung terbaru dari berbagai penjual terpercaya";
+$page_title = "Sakinah Style - Anggun & Syar'i";
+$page_description = "Toko fashion muslimah terpercaya dengan koleksi terbaru dan berkualitas";
+
+// Get featured products
+$hype_products = getHypeProducts(8);
+$clearance_products = getClearanceProducts(8);
+
+include __DIR__ . '/includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($page_title); ?></title>
-    <meta name="description" content="<?php echo htmlspecialchars($page_description); ?>">
-    
-    <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/custom.css">
-    
-    <style>
-        /* Inline CSS sebagai fallback */
-        :root {
-            --primary-color: #8B5FBF;
-            --primary-light: #f8e9e1;
-            --secondary-color: #2C3E50;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .navbar-brand {
-            font-weight: bold;
-            color: var(--primary-color) !important;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary-light) 0%, #f0f4ff 100%);
-            padding: 80px 0;
-        }
-        
-        .product-card {
-            transition: transform 0.3s;
-            border: 1px solid #eee;
-        }
-        
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-    </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="bi bi-shop"></i> HijabStore
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item"><a class="nav-link active" href="#">Beranda</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#categories">Kategori</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#products">Produk</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#tutorial">Tutorial</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#contact">Kontak</a></li>
-                </ul>
-                
-                <div class="d-flex gap-2">
-                    <a href="pages/login.php" class="btn btn-outline-primary">Masuk</a>
-                    <a href="pages/register.php" class="btn btn-primary">Daftar</a>
-                    <a href="#" class="btn btn-light"><i class="bi bi-cart3"></i></a>
+
+<!-- Hero Carousel -->
+<section class="hero-carousel">
+    <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+        </div>
+        <div class="carousel-inner">
+            <div class="carousel-item active" style="background-image: url('https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=1920&q=80');">
+                <div class="carousel-caption">
+                    <h1 class="fade-in-up">Sakinah Style:<br>Anggun & Syar'i</h1>
+                    <p class="fade-in-up">Temukan koleksi fashion muslimah terbaru dengan kualitas terbaik. Setiap produk dipilih dengan teliti untuk memberikan kenyamanan dan gaya yang elegan.</p>
+                    <a href="shop.php" class="btn btn-primary btn-lg fade-in-up">
+                        <i class="bi bi-bag"></i> Belanja Sekarang
+                    </a>
+                </div>
+            </div>
+            <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1583292650898-7d22cd27ca6f?w=1920&q=80');">
+                <div class="carousel-caption">
+                    <h1 class="fade-in-up">Koleksi Terbaru<br>Muslimah Modern</h1>
+                    <p class="fade-in-up">Dari pashmina elegan hingga segi empat yang praktis, temukan gaya yang sesuai dengan kepribadian Anda.</p>
+                    <a href="shop.php" class="btn btn-primary btn-lg fade-in-up">
+                        <i class="bi bi-bag"></i> Belanja Sekarang
+                    </a>
+                </div>
+            </div>
+            <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1556306535-0f09a537f0a3?w=1920&q=80');">
+                <div class="carousel-caption">
+                    <h1 class="fade-in-up">Bahan Premium<br>Jahitan Berkualitas</h1>
+                    <p class="fade-in-up">Setiap produk dibuat dengan bahan pilihan dan jahitan rapi untuk kenyamanan maksimal.</p>
+                    <a href="shop.php" class="btn btn-primary btn-lg fade-in-up">
+                        <i class="bi bi-bag"></i> Belanja Sekarang
+                    </a>
                 </div>
             </div>
         </div>
-    </nav>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+</section>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <h1 class="display-4 fw-bold mb-3">
-                        Temukan <span class="text-primary">Kerudung Terbaik</span> untuk Gaya Muslimah Modern
-                    </h1>
-                    <p class="lead mb-4">
-                        Marketplace pertama yang menghubungkan penjual kerudung berkualitas dengan pembeli cerdas.
-                    </p>
-                    
-                    <div class="input-group mb-3 shadow" style="max-width: 500px;">
-                        <input type="text" class="form-control" placeholder="Cari kerudung...">
-                        <button class="btn btn-primary" type="button">Cari</button>
+<!-- Category Grid -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Koleksi Kami</h2>
+        <div class="category-grid">
+            <div class="category-item hover-lift">
+                <a href="<?php echo SITE_URL; ?>/shop.php?kategori=1">
+                    <div class="category-image">
+                        <img src="https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400&q=80" alt="Segi Empat">
                     </div>
-                    
-                    <div class="d-flex gap-2">
-                        <a href="#products" class="btn btn-primary btn-lg">Belanja Sekarang</a>
-                        <a href="#tutorial" class="btn btn-outline-primary btn-lg">Lihat Tutorial</a>
+                    <h5>Segi Empat</h5>
+                </a>
+            </div>
+            <div class="category-item hover-lift">
+                <a href="<?php echo SITE_URL; ?>/shop.php?kategori=2">
+                    <div class="category-image">
+                        <img src="https://images.unsplash.com/photo-1583292650898-7d22cd27ca6f?w=400&q=80" alt="Pashmina">
                     </div>
+                    <h5>Pashmina</h5>
+                </a>
+            </div>
+            <div class="category-item hover-lift">
+                <a href="<?php echo SITE_URL; ?>/shop.php?kategori=3">
+                    <div class="category-image">
+                        <img src="https://images.unsplash.com/photo-1556306535-0f09a537f0a3?w=400&q=80" alt="Instan">
+                    </div>
+                    <h5>Instan</h5>
+                </a>
+            </div>
+            <div class="category-item hover-lift">
+                <a href="<?php echo SITE_URL; ?>/shop.php">
+                    <div class="category-image">
+                        <img src="https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=400&q=80" alt="Accessories">
+                    </div>
+                    <h5>Accessories</h5>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item hover-lift">
+                    <div class="feature-icon">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <h5>Bahan Premium</h5>
+                    <p>Setiap produk menggunakan bahan berkualitas tinggi untuk kenyamanan maksimal</p>
                 </div>
-                
-                <div class="col-lg-6">
-                    <img src="https://images.unsplash.com/photo-1556306535-0f09a537f0a3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                         class="img-fluid rounded shadow-lg" 
-                         alt="Hijab Fashion">
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item hover-lift">
+                    <div class="feature-icon">
+                        <i class="bi bi-scissors"></i>
+                    </div>
+                    <h5>Jahitan Rapi</h5>
+                    <p>Dijahit dengan teliti oleh pengrajin berpengalaman untuk hasil yang sempurna</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item hover-lift">
+                    <div class="feature-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <h5>Pengiriman Cepat</h5>
+                    <p>Pengiriman cepat dan aman ke seluruh Indonesia dengan packing yang rapi</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item hover-lift">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h5>Garansi Retur</h5>
+                    <p>Garansi retur 7 hari jika produk tidak sesuai atau ada kerusakan</p>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Categories -->
-    <section id="categories" class="py-5 bg-light">
-        <div class="container">
-            <h2 class="text-center fw-bold mb-5">Kategori Populer</h2>
-            
+<!-- Sedang Hype Section -->
+<section id="hype-products" class="section">
+    <div class="container">
+        <h2 class="section-title">Sedang Hype!</h2>
+        
+        <?php if (empty($hype_products)): ?>
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle"></i> Belum ada produk yang sedang hype. 
+                <a href="shop.php" class="alert-link">Lihat semua produk</a>
+            </div>
+        <?php else: ?>
             <div class="row g-4">
-                <?php
-                $categories = [
-                    ['Segi Empat', 'bi-square', 'primary', '1.200+'],
-                    ['Pashmina', 'bi-scarf', 'success', '850+'],
-                    ['Instan', 'bi-lightning', 'warning', '650+'],
-                    ['Bergo', 'bi-capsule', 'info', '320+'],
-                ];
-                
-                foreach ($categories as $cat) {
-                    echo '
-                    <div class="col-md-3 col-6">
-                        <div class="card text-center border-0 shadow-sm h-100">
-                            <div class="card-body p-4">
-                                <i class="bi ' . $cat[1] . ' fs-1 text-' . $cat[2] . ' mb-3"></i>
-                                <h5 class="fw-bold">' . $cat[0] . '</h5>
-                                <p class="text-muted">' . $cat[3] . ' Produk</p>
-                            </div>
-                        </div>
-                    </div>';
-                }
-                ?>
-            </div>
-        </div>
-    </section>
-
-    <!-- Products -->
-    <section id="products" class="py-5">
-        <div class="container">
-            <h2 class="fw-bold mb-5">Produk Terbaru</h2>
-            
-            <div class="row g-4">
-                <?php
-                $products = [
-                    ['Pashmina Silk Premium', 'Rp 89.000', 'Rp 129.000', 'BESTSELLER'],
-                    ['Kerudung Segi Empat Katun', 'Rp 45.000', 'Rp 65.000', 'DISKON 30%'],
-                    ['Hijab Instan Paris', 'Rp 75.000', '', 'NEW'],
-                    ['Bergo Jersey Motif', 'Rp 55.000', 'Rp 75.000', 'LIMITED'],
-                ];
-                
-                foreach ($products as $product) {
-                    echo '
-                    <div class="col-md-3 col-6">
-                        <div class="card product-card h-100">
-                            <div class="card-img-top bg-secondary" style="height: 200px;"></div>
-                            <div class="card-body">
-                                <span class="badge bg-danger">' . $product[3] . '</span>
-                                <h6 class="card-title mt-2">' . $product[0] . '</h6>
-                                <div class="text-warning mb-2">
-                                    <i class="bi bi-star-fill"></i>
-                                    <i class="bi bi-star-fill"></i>
-                                    <i class="bi bi-star-fill"></i>
-                                    <i class="bi bi-star-fill"></i>
-                                    <i class="bi bi-star-half"></i>
-                                    <span class="text-muted">(124)</span>
+                <?php foreach ($hype_products as $product): ?>
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="product-card position-relative">
+                            <span class="product-card-badge badge-best-seller">
+                                <i class="bi bi-fire"></i> Best Seller
+                            </span>
+                            
+                            <a href="product.php?id=<?php echo $product['ID_Induk']; ?>">
+                                <?php if ($product['Foto_Produk']): ?>
+                                    <img src="<?php echo SITE_URL; ?>/assets/images/products/<?php echo htmlspecialchars($product['Foto_Produk']); ?>" 
+                                         alt="<?php echo htmlspecialchars($product['Nama_Produk']); ?>"
+                                         class="product-card-img">
+                                <?php else: ?>
+                                    <div class="product-card-img">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="product-card-body">
+                                    <h5 class="product-card-title">
+                                        <?php echo htmlspecialchars($product['Nama_Produk']); ?>
+                                    </h5>
+                                    <p class="text-muted small mb-2">
+                                        <?php echo htmlspecialchars($product['Nama_Kategori']); ?> • 
+                                        <?php echo htmlspecialchars($product['Nama_Bahan']); ?>
+                                    </p>
+                                    <div class="product-card-price">
+                                        <?php 
+                                        if ($product['Harga_Min'] == $product['Harga_Max']) {
+                                            echo formatRupiah($product['Harga_Min']);
+                                        } else {
+                                            echo formatRupiah($product['Harga_Min']) . ' - ' . formatRupiah($product['Harga_Max']);
+                                        }
+                                        ?>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="bi bi-cart-check"></i> Terjual <?php echo $product['Total_Terjual']; ?> pcs
+                                    </small>
                                 </div>
-                                <div>
-                                    <span class="fw-bold text-primary">' . $product[1] . '</span>';
-                    if ($product[2]) {
-                        echo ' <del class="text-muted small">' . $product[2] . '</del>';
-                    }
-                    echo '
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary w-100 mt-2">
-                                    <i class="bi bi-cart-plus"></i> Tambah
-                                </button>
-                            </div>
-                        </div>
-                    </div>';
-                }
-                ?>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <h5 class="fw-bold">HijabStore</h5>
-                    <p>Marketplace kerudung terpercaya untuk muslimah modern.</p>
-                </div>
-                <div class="col-lg-8">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <h6>Belanja</h6>
-                            <ul class="list-unstyled">
-                                <li><a href="#" class="text-white-50 text-decoration-none">Semua Produk</a></li>
-                                <li><a href="#" class="text-white-50 text-decoration-none">Kategori</a></li>
-                                <li><a href="#" class="text-white-50 text-decoration-none">Flash Sale</a></li>
-                            </ul>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <h6>Bantuan</h6>
-                            <ul class="list-unstyled">
-                                <li><a href="#" class="text-white-50 text-decoration-none">Cara Belanja</a></li>
-                                <li><a href="#" class="text-white-50 text-decoration-none">Pengiriman</a></li>
-                                <li><a href="#" class="text-white-50 text-decoration-none">Retur Produk</a></li>
-                            </ul>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <h6>Kontak</h6>
-                            <ul class="list-unstyled">
-                                <li><i class="bi bi-envelope"></i> hello@hijabstore.com</li>
-                                <li><i class="bi bi-whatsapp"></i> +62 812-3456-7890</li>
-                            </ul>
+                            </a>
                         </div>
                     </div>
-                </div>
+                <?php endforeach; ?>
             </div>
             
-            <hr class="bg-white-50">
-            
-            <div class="text-center text-white-50">
-                <p>&copy; <?php echo date('Y'); ?> HijabStore. All rights reserved.</p>
+            <div class="text-center mt-4">
+                <a href="shop.php" class="btn btn-outline-primary">
+                    Lihat Semua Produk <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
-        </div>
-    </footer>
+        <?php endif; ?>
+    </div>
+</section>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-    // Smooth scroll
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    });
-    </script>
-</body>
-</html>
+<!-- Cuci Gudang / Last Piece Section -->
+<section id="clearance-products" class="section section-alt">
+    <div class="container">
+        <h2 class="section-title">Cuci Gudang / Last Piece</h2>
+        
+        <?php if (empty($clearance_products)): ?>
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle"></i> Tidak ada produk dengan stok terbatas saat ini.
+            </div>
+        <?php else: ?>
+            <div class="row g-4">
+                <?php foreach ($clearance_products as $product): ?>
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="product-card position-relative">
+                            <?php if ($product['Stok'] <= 2): ?>
+                                <span class="product-card-badge badge-low-stock">
+                                    <i class="bi bi-exclamation-triangle"></i> Last Piece!
+                                </span>
+                            <?php else: ?>
+                                <span class="product-card-badge badge-low-stock">
+                                    <i class="bi bi-tag"></i> Stok Terbatas
+                                </span>
+                            <?php endif; ?>
+                            
+                            <a href="product.php?id=<?php echo $product['ID_Induk']; ?>">
+                                <?php if ($product['Foto_Produk']): ?>
+                                    <img src="<?php echo SITE_URL; ?>/assets/images/products/<?php echo htmlspecialchars($product['Foto_Produk']); ?>" 
+                                         alt="<?php echo htmlspecialchars($product['Nama_Produk']); ?>"
+                                         class="product-card-img">
+                                <?php else: ?>
+                                    <div class="product-card-img">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="product-card-body">
+                                    <h5 class="product-card-title">
+                                        <?php echo htmlspecialchars($product['Nama_Produk']); ?>
+                                    </h5>
+                                    <p class="text-muted small mb-2">
+                                        Warna: <?php echo htmlspecialchars($product['Nama_Warna']); ?>
+                                    </p>
+                                    <div class="product-card-price">
+                                        <?php echo formatRupiah($product['Harga_Jual']); ?>
+                                    </div>
+                                    <div class="product-card-stock">
+                                        <i class="bi bi-box"></i> Stok: <?php echo $product['Stok']; ?> pcs
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="shop.php" class="btn btn-primary">
+                    Lihat Semua Produk <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        <?php endif; ?>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="newsletter-section" style="background-image: url('https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=1920&q=80');">
+    <div class="container">
+        <div class="newsletter-content">
+            <h2>Dapatkan Update Koleksi Terbaru</h2>
+            <p class="mb-4">Berlangganan newsletter kami untuk mendapatkan informasi produk baru dan penawaran spesial</p>
+            <form class="newsletter-form" method="POST" action="#">
+                <input type="email" class="form-control" placeholder="Masukkan email Anda" required>
+                <button type="submit" class="btn-custom">
+                    <i class="bi bi-envelope"></i> Berlangganan
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<?php include __DIR__ . '/includes/footer.php'; ?>
