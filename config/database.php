@@ -55,5 +55,18 @@ define('SITE_NAME', 'Sakinah Style');
 // Error reporting (enable for development)
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+// Database for admin
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db   = "hijabstore_db";
+
+$conn = mysqli_connect($host, $user, $pass, $db);
+
+if (!$conn) {
+    die("Koneksi gagal: " . mysqli_connect_error());
+}
+
 ?>
 
