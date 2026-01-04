@@ -50,7 +50,7 @@ function getHypeProducts($limit = 8) {
                 mb.Nama_Bahan,
                 MIN(pv.Harga_Jual) as Harga_Min,
                 MAX(pv.Harga_Jual) as Harga_Max,
-                GROUP_CONCAT(DISTINCT pv.Foto_Produk ORDER BY pv.Foto_Produk LIMIT 1) as Foto_Produk,
+                MIN(pv.Foto_Produk) as Foto_Produk,
                 SUM(dt.Jumlah_Beli) as Total_Terjual
             FROM Produk_Induk pi
             INNER JOIN Produk_Varian pv ON pi.ID_Induk = pv.ID_Induk
@@ -274,7 +274,7 @@ function getAllProducts($filters = []) {
                 mb.Nama_Bahan,
                 MIN(pv.Harga_Jual) as Harga_Min,
                 MAX(pv.Harga_Jual) as Harga_Max,
-                GROUP_CONCAT(DISTINCT pv.Foto_Produk ORDER BY pv.Foto_Produk LIMIT 1) as Foto_Produk,
+                MIN(pv.Foto_Produk) as Foto_Produk,
                 SUM(CASE WHEN pv.Stok > 0 THEN 1 ELSE 0 END) as Variant_Tersedia
                 {$salesSelect}
             FROM Produk_Induk pi
@@ -568,7 +568,7 @@ function getRelatedProducts($id_induk, $limit = 4) {
                 mb.Nama_Bahan,
                 MIN(pv.Harga_Jual) as Harga_Min,
                 MAX(pv.Harga_Jual) as Harga_Max,
-                GROUP_CONCAT(DISTINCT pv.Foto_Produk ORDER BY pv.Foto_Produk LIMIT 1) as Foto_Produk
+                MIN(pv.Foto_Produk) as Foto_Produk
             FROM Produk_Induk pi
             INNER JOIN Produk_Varian pv ON pi.ID_Induk = pv.ID_Induk
             LEFT JOIN Master_Kategori mk ON pi.ID_Kategori = mk.ID_Kategori
@@ -770,17 +770,20 @@ function processCheckout($data) {
             ]);
             
             // Step 5: Decrease Stock with validation
+            // Step 5: Decrease Stock with validation
+            // PERBAIKAN: Gunakan nama parameter berbeda (:qty_deduct dan :qty_check)
             $sqlUpdateStock = "
                 UPDATE Produk_Varian 
-                SET Stok = Stok - :qty 
+                SET Stok = Stok - :qty_deduct 
                 WHERE Kode_SKU = :kode_sku
-                AND Stok >= :qty
+                AND Stok >= :qty_check
             ";
             
             $stmtUpdate = $pdo->prepare($sqlUpdateStock);
             $stmtUpdate->execute([
-                ':qty' => $item['qty'],
-                ':kode_sku' => $item['kode_sku']
+                ':qty_deduct' => $item['qty'],  // Parameter 1
+                ':qty_check'  => $item['qty'],  // Parameter 2 (Nilai sama)
+                ':kode_sku'   => $item['kode_sku']
             ]);
             
             // Verify stock was actually updated

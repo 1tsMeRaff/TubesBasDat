@@ -3,7 +3,7 @@
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'hijabstore_db');
 define('DB_USER', 'root');
-define('DB_PASS', ''); // Default XAMPP password is empty
+define('DB_PASS', '');
 
 // Site configuration
 define('SITE_URL', 'http://localhost/TubesBasDat');
