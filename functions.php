@@ -623,6 +623,39 @@ function generateTransactionNumber() {
     return 'TRX-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
 }
 
+function calculateDiscount($product) {
+    if (isset($product['Harga_Asli']) && $product['Harga_Asli'] > 0 && 
+        isset($product['Harga_Min']) && $product['Harga_Min'] > 0) {
+        if ($product['Harga_Asli'] > $product['Harga_Min']) {
+            return round((($product['Harga_Asli'] - $product['Harga_Min']) / $product['Harga_Asli']) * 100);
+        }
+    }
+    return 0;
+}
+
+function getProductRating($productId) {
+    global $pdo;
+    
+    $query = "SELECT 
+                AVG(Rating) as average_rating,
+                COUNT(*) as rating_count
+              FROM ulasan 
+              WHERE ID_Induk = ? AND Rating > 0";
+    
+    try {
+        $stmt = $pdo->prepare($query);
+        $stmt->execute([$productId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return [
+            'average' => $result['average_rating'] ? round($result['average_rating'], 1) : 0,
+            'count' => $result['rating_count'] ?? 0
+        ];
+    } catch (PDOException $e) {
+        return ['average' => 0, 'count' => 0];
+    }
+}
+
 /**
  * Process Checkout with Database Transaction
  * @param array $data ['nama', 'alamat', 'whatsapp', 'email', 'user_id', 'cart_items', 'shipping_cost']

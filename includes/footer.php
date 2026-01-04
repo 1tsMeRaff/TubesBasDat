@@ -63,9 +63,10 @@
                     <h6 class="fw-bold mb-3">Metode Pembayaran</h6>
                     <p class="text-white-50 small mb-3">Kami menerima pembayaran melalui:</p>
                     <div class="payment-methods">
-                        <img src="https://via.placeholder.com/80x40/0066CC/FFFFFF?text=BCA" alt="BCA" class="payment-logo">
-                        <img src="https://via.placeholder.com/80x40/00A859/FFFFFF?text=Mandiri" alt="Mandiri" class="payment-logo">
-                        <img src="https://via.placeholder.com/80x40/FF6B00/FFFFFF?text=QRIS" alt="QRIS" class="payment-logo">
+                        <!-- Logo BCA (eksternal) -->
+                        <img src="assets/images/logo/logo-bca.png" alt="BCA" class="payment-logo">
+                        <img src="assets/images/logo/logo-mandiri.png" alt="Mandiri" class="payment-logo">
+                        <img src="assets/images/logo/logo-qris.png" alt="QRIS" class="payment-logo">
                     </div>
                     <p class="text-white-50 small mt-3 mb-0">
                         <i class="bi bi-shield-check text-success"></i> Pembayaran Aman & Terpercaya
