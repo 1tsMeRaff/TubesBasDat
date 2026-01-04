@@ -670,15 +670,23 @@ a:hover {
    FILTERS SIDEBAR
    ========================================== */
 
-.filter-sidebar {
-  background: var(--white);
-  padding: var(--spacing-lg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: var(--spacing-md);
+/* Navbar (tetap) */
+.navbar {
   position: sticky;
-  top: 100px;
-  max-height: calc(100vh - 120px);
+  top: 0;
+  z-index: 1030;
+}
+
+/* Wrapper sticky */
+.filter-sidebar {
+  position: sticky;
+  top: 120px; /* DI BAWAH NAVBAR */
+  z-index: 1020;
+}
+
+/* Scroll HANYA di dalam */
+.filter-scroll {
+  max-height: calc(100vh - 140px);
   overflow-y: auto;
 }
 
@@ -1451,12 +1459,6 @@ footer .list-unstyled li {
 
   .hero-subtitle {
     font-size: 1.1rem;
-  }
-
-  .filter-sidebar {
-    position: static;
-    max-height: none;
-    margin-bottom: var(--spacing-lg);
   }
 
   .cart-summary {

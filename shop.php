@@ -1,8 +1,4 @@
 <?php
-/**
- * Shop Page - Product Listing with Advanced Filters
- * Sakinah Style
- */
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/functions.php';
@@ -83,7 +79,7 @@ include __DIR__ . '/includes/header.php';
         <!-- Desktop Filter Sidebar -->
         <?php if (!$is_mobile): ?>
         <div class="col-lg-3 col-xl-2 d-none d-lg-block">
-            <div class="card shadow-sm sticky-top" style="top: 20px;">
+            <div class="card shadow-sm sticky-top">
                 <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
                         <i class="bi bi-funnel"></i> Filter Produk
@@ -467,10 +463,8 @@ function clearSearch() {
     document.getElementById('filterForm').submit();
 }
 
-function addToCart(productId) {
-    // Placeholder for add to cart functionality
-    alert('Menambahkan produk ke keranjang: ' + productId);
-    // You can implement AJAX call here
+function addToCart(Nama_Produk) {
+    alert('Menambahkan produk ke keranjang: ' + Nama_Produk);
 }
 </script>
 
