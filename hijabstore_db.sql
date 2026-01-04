@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 04, 2026 at 08:32 AM
+-- Generation Time: Jan 04, 2026 at 03:55 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,45 @@ SET time_zone = "+00:00";
 --
 -- Database: `hijabstore_db`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `audit_price_changes`
+--
+
+CREATE TABLE `audit_price_changes` (
+  `ID_Audit` int(11) NOT NULL,
+  `Kode_SKU` varchar(50) DEFAULT NULL,
+  `Old_Price` decimal(12,2) DEFAULT NULL,
+  `New_Price` decimal(12,2) DEFAULT NULL,
+  `Percentage_Change` decimal(5,2) DEFAULT NULL,
+  `Changed_By` varchar(100) DEFAULT NULL,
+  `Changed_At` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `audit_price_changes`
+--
+
+INSERT INTO `audit_price_changes` (`ID_Audit`, `Kode_SKU`, `Old_Price`, `New_Price`, `Percentage_Change`, `Changed_By`, `Changed_At`) VALUES
+(1, 'MDL-01-BLK', 45000.00, 20000.00, -55.56, 'root@localhost', '2026-01-04 14:41:02');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `audit_stock_changes`
+--
+
+CREATE TABLE `audit_stock_changes` (
+  `ID_Audit` int(11) NOT NULL,
+  `Kode_SKU` varchar(50) DEFAULT NULL,
+  `Old_Stock` int(11) DEFAULT NULL,
+  `New_Stock` int(11) DEFAULT NULL,
+  `Reason` varchar(100) DEFAULT NULL,
+  `Changed_By` varchar(100) DEFAULT NULL,
+  `Changed_At` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -49,6 +88,109 @@ INSERT INTO `detail_transaksi` (`ID_Detail`, `No_Transaksi`, `Kode_SKU`, `Jumlah
 (6, 'TRX-005', 'MDL-04-DPK', 1, 85000, 85000),
 (23, 'TRX-20260104-8557', 'MDL-06-BLK', 1, 25000, 25000),
 (24, 'TRX-20260104-8557', 'MDL-08-BLK', 1, 135000, 135000);
+
+--
+-- Triggers `detail_transaksi`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_kurangi_stok_otomatis` AFTER INSERT ON `detail_transaksi` FOR EACH ROW BEGIN
+    UPDATE produk_varian 
+    SET Stok = Stok - NEW.Jumlah_Beli
+    WHERE Kode_SKU = NEW.Kode_SKU;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_update_stok_setelah_detail_transaksi` AFTER INSERT ON `detail_transaksi` FOR EACH ROW BEGIN
+    -- 1. Kurangi stok di produk_varian
+    UPDATE produk_varian 
+    SET Stok = Stok - NEW.Jumlah_Beli
+    WHERE Kode_SKU = NEW.Kode_SKU;
+    
+    -- 2. Log perubahan stok ke log_stok_changes
+    INSERT INTO log_stok_changes 
+    (Kode_SKU, Perubahan, Jumlah, No_Transaksi, Created_At)
+    VALUES 
+    (NEW.Kode_SKU, 'DECREASE', NEW.Jumlah_Beli, NEW.No_Transaksi, NOW());
+    
+    -- 3. Update total bayar di transaksi
+    UPDATE transaksi t
+    SET t.Total_Bayar = (
+        SELECT SUM(dt.Subtotal) 
+        FROM detail_transaksi dt 
+        WHERE dt.No_Transaksi = NEW.No_Transaksi
+    )
+    WHERE t.No_Transaksi = NEW.No_Transaksi;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_update_total_bayar` AFTER INSERT ON `detail_transaksi` FOR EACH ROW BEGIN
+    UPDATE transaksi t
+    SET t.Total_Bayar = (
+        SELECT SUM(Subtotal) 
+        FROM detail_transaksi 
+        WHERE No_Transaksi = NEW.No_Transaksi
+    )
+    WHERE t.No_Transaksi = NEW.No_Transaksi;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_validasi_stok_sebelum_detail_transaksi` BEFORE INSERT ON `detail_transaksi` FOR EACH ROW BEGIN
+    DECLARE current_stock INT;
+    DECLARE product_name VARCHAR(100);
+    DECLARE is_active_status TINYINT(1);
+    DECLARE error_message VARCHAR(255);
+    
+    -- Ambil stok saat ini, nama produk, dan status aktif
+    SELECT pv.Stok, pi.Nama_Produk, pv.Is_Active 
+    INTO current_stock, product_name, is_active_status
+    FROM produk_varian pv
+    JOIN produk_induk pi ON pv.ID_Induk = pi.ID_Induk
+    WHERE pv.Kode_SKU = NEW.Kode_SKU;
+    
+    -- Validasi 1: Produk harus aktif
+    IF is_active_status != 1 THEN
+        SET error_message = CONCAT('Produk "', product_name, '" tidak aktif untuk dijual');
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
+    END IF;
+    
+    -- Validasi 2: Stok harus cukup
+    IF current_stock < NEW.Jumlah_Beli THEN
+        SET error_message = CONCAT(
+            'Stok tidak mencukupi untuk "', 
+            product_name, 
+            '". Stok tersedia: ', 
+            current_stock,
+            ', Diminta: ',
+            NEW.Jumlah_Beli
+        );
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
+    END IF;
+    
+    -- Validasi 3: Jumlah beli minimal 1
+    IF NEW.Jumlah_Beli < 1 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Jumlah beli minimal 1 item';
+    END IF;
+END
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `log_stok_changes`
+--
+
+CREATE TABLE `log_stok_changes` (
+  `ID_Log` int(11) NOT NULL,
+  `Kode_SKU` varchar(50) DEFAULT NULL,
+  `Perubahan` enum('INCREASE','DECREASE') DEFAULT NULL,
+  `Jumlah` int(11) DEFAULT NULL,
+  `No_Transaksi` varchar(50) DEFAULT NULL,
+  `Created_At` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -148,7 +290,41 @@ INSERT INTO `pelanggan` (`ID_Pelanggan`, `Nama_Pelanggan`, `No_HP`, `Email`, `Pa
 ('PLG-002', 'Ukhti Sarah', '081299998888', 'sarah@mail.com', 'password123', 'customer', 'Jl. Dago Asri No. 5, Bandung', '2026-01-02'),
 ('PLG-003', 'Bunda Rina', '081377776666', 'rina@mail.com', 'password123', 'customer', 'Komp. Setiabudi Regency, Bandung', '2026-01-03'),
 ('PLG-004', 'Siti Aminah', '085755554444', 'siti@mail.com', 'password123', 'customer', 'Jl. Tubagus Ismail, Bandung', '2026-01-04'),
-('PLG-2026-001', 'Rafi Saputra', 'atep@gmail.com', 'atep@gmail.com', '$2y$10$LXba6ftdwYF/pT2ZbunhLuLwp843r8xG4rVmrwvyHTPzQnUinP2bu', 'customer', NULL, '2026-01-04');
+('PLG-2026-001', 'Rafi Saputra', 'atep@gmail.com', 'atep@gmail.com', '$2y$10$LXba6ftdwYF/pT2ZbunhLuLwp843r8xG4rVmrwvyHTPzQnUinP2bu', 'admin', NULL, '2026-01-04');
+
+--
+-- Triggers `pelanggan`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_validasi_pelanggan_unik` BEFORE INSERT ON `pelanggan` FOR EACH ROW BEGIN
+    DECLARE error_msg VARCHAR(255);
+    
+    -- Cek duplikat email (jika tidak NULL)
+    IF NEW.Email IS NOT NULL AND NEW.Email != '' THEN
+        IF EXISTS (
+            SELECT 1 FROM pelanggan 
+            WHERE Email = NEW.Email 
+            AND ID_Pelanggan != NEW.ID_Pelanggan
+        ) THEN
+            SET error_msg = CONCAT('Email "', NEW.Email, '" sudah terdaftar');
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_msg;
+        END IF;
+    END IF;
+    
+    -- Cek duplikat nomor HP (jika tidak NULL)
+    IF NEW.No_HP IS NOT NULL AND NEW.No_HP != '' THEN
+        IF EXISTS (
+            SELECT 1 FROM pelanggan 
+            WHERE No_HP = NEW.No_HP 
+            AND ID_Pelanggan != NEW.ID_Pelanggan
+        ) THEN
+            SET error_msg = CONCAT('Nomor HP "', NEW.No_HP, '" sudah terdaftar');
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_msg;
+        END IF;
+    END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -198,43 +374,228 @@ CREATE TABLE `produk_varian` (
   `Harga_Jual` int(11) NOT NULL,
   `Stok` int(11) NOT NULL DEFAULT 0,
   `Foto_Produk` varchar(255) DEFAULT NULL,
-  `Is_Active` tinyint(1) DEFAULT 1
+  `Is_Active` tinyint(1) DEFAULT 1,
+  `Created_At` timestamp NOT NULL DEFAULT current_timestamp(),
+  `Updated_At` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `Harga_Modal` int(11) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `produk_varian`
 --
 
-INSERT INTO `produk_varian` (`Kode_SKU`, `ID_Induk`, `ID_Warna`, `Harga_Jual`, `Stok`, `Foto_Produk`, `Is_Active`) VALUES
-('MDL-01-BLK', 1, 1, 45000, 50, 'pashmina_ceruty_hitam.jpg', 1),
-('MDL-01-MRN', 1, 3, 45000, 4, 'pashmina_ceruty_maroon.jpg', 1),
-('MDL-02-NVY', 2, 4, 30000, 100, 'segiempat_voal_navy.jpg', 1),
-('MDL-03-BLK', 3, 1, 35000, 100, 'bergo_sport_black.jpg', 1),
-('MDL-03-MOC', 3, 6, 35000, 50, 'bergo_sport_mocca.jpg', 1),
-('MDL-03-NVY', 3, 4, 35000, 85, 'bergo_sport_navy.jpg', 1),
-('MDL-04-DPK', 4, 7, 85000, 30, 'pashmina_silk_dusty.jpg', 1),
-('MDL-04-SGE', 4, 5, 85000, 25, 'pashmina_silk_sage.jpg', 1),
-('MDL-05-BLK', 5, 1, 120000, 0, 'khimar_syari_black.jpg', 1),
-('MDL-06-BLK', 6, 1, 25000, 149, 'bergo_maryam_hitam.jpg', 1),
-('MDL-06-MOC', 6, 6, 25000, 80, 'bergo_maryam_mocca.jpg', 1),
-('MDL-06-MRN', 6, 3, 25000, 100, 'bergo_maryam_maroon.jpg', 1),
-('MDL-07-BLK', 7, 1, 15000, 200, 'sport_spandex_hitam.jpg', 1),
-('MDL-07-NVY', 7, 4, 15000, 120, 'sport_spandex_navy.jpg', 1),
-('MDL-07-WHT', 7, 2, 15000, 90, 'sport_spandex_white.jpg', 1),
-('MDL-08-BLK', 8, 1, 135000, 49, 'french_khimar_hitam.jpg', 1),
-('MDL-08-MOC', 8, 6, 135000, 40, 'french_khimar_mocca.jpg', 1),
-('MDL-08-SGE', 8, 5, 135000, 35, 'french_khimar_sage.jpg', 1),
-('MDL-09-BLK', 9, 1, 40000, 75, 'plisket_hitam.jpg', 1),
-('MDL-09-DPK', 9, 7, 40000, 60, 'plisket_dusty.jpg', 1),
-('MDL-09-MOC', 9, 6, 40000, 55, 'plisket_mocca.jpg', 1),
-('MDL-10-NVY', 10, 4, 55000, 25, 'voal_motif_navy.jpg', 1),
-('MDL-10-SGE', 10, 5, 55000, 20, 'voal_motif_sage.jpg', 1),
-('MDL-11-BLK', 11, 1, 30000, 100, 'hamidah_hitam.jpg', 1),
-('MDL-11-MRN', 11, 3, 30000, 65, 'hamidah_maroon.jpg', 1),
-('MDL-11-NVY', 11, 4, 30000, 80, 'hamidah_navy.jpg', 1),
-('MDL-12-BLK', 12, 1, 95000, 15, 'khimar_jumbo_hitam.jpg', 1),
-('MDL-12-WHT', 12, 2, 95000, 10, 'khimar_jumbo_putih.jpg', 1),
-('MDL-13-BLK', 13, 1, 60000, 45, 'pash_inner_hitam.jpg', 1);
+INSERT INTO `produk_varian` (`Kode_SKU`, `ID_Induk`, `ID_Warna`, `Harga_Jual`, `Stok`, `Foto_Produk`, `Is_Active`, `Created_At`, `Updated_At`, `Harga_Modal`) VALUES
+('MDL-01-BLK', 1, 1, 20000, 50, 'pashmina_ceruty_hitam.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-01-HITA', 1, 1, 45000, 100, NULL, 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-01-HITA-1', 1, 1, 45000, 100, NULL, 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-01-HITA-2', 1, 1, 45000, 100, 'test.jpg', 1, '2026-01-04 14:41:01', '2026-01-04 14:45:16', 0),
+('MDL-01-HITA-3', 1, 1, 45000, 100, 'test.jpg', 1, '2026-01-04 14:41:31', '2026-01-04 14:45:16', 0),
+('MDL-01-MRN', 1, 3, 45000, 4, 'pashmina_ceruty_maroon.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-02-NVY', 2, 4, 30000, 100, 'segiempat_voal_navy.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-03-BLK', 3, 1, 35000, 100, 'bergo_sport_black.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-03-MOC', 3, 6, 35000, 50, 'bergo_sport_mocca.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-03-NVY', 3, 4, 35000, 85, 'bergo_sport_navy.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-04-DPK', 4, 7, 85000, 30, 'pashmina_silk_dusty.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-04-SGE', 4, 5, 85000, 25, 'pashmina_silk_sage.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-05-BLK', 5, 1, 120000, 20, 'khimar_syari_black.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-06-BLK', 6, 1, 25000, 149, 'bergo_maryam_hitam.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-06-MOC', 6, 6, 25000, 80, 'bergo_maryam_mocca.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-06-MRN', 6, 3, 25000, 100, 'bergo_maryam_maroon.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-07-BLK', 7, 1, 15000, 200, 'sport_spandex_hitam.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-07-NVY', 7, 4, 15000, 120, 'sport_spandex_navy.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-07-WHT', 7, 2, 15000, 90, 'sport_spandex_white.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-08-BLK', 8, 1, 135000, 49, 'french_khimar_hitam.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-08-MOC', 8, 6, 135000, 40, 'french_khimar_mocca.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-08-SGE', 8, 5, 135000, 35, 'french_khimar_sage.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-09-BLK', 9, 1, 40000, 75, 'plisket_hitam.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-09-DPK', 9, 7, 40000, 60, 'plisket_dusty.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-09-MOC', 9, 6, 40000, 55, 'plisket_mocca.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-10-NVY', 10, 4, 55000, 25, 'voal_motif_navy.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-10-SGE', 10, 5, 55000, 20, 'voal_motif_sage.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-11-BLK', 11, 1, 30000, 100, 'hamidah_hitam.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-11-MRN', 11, 3, 30000, 65, 'hamidah_maroon.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-11-NVY', 11, 4, 30000, 80, 'hamidah_navy.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-12-BLK', 12, 1, 95000, 15, 'khimar_jumbo_hitam.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-12-WHT', 12, 2, 95000, 10, 'khimar_jumbo_putih.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0),
+('MDL-13-BLK', 13, 1, 60000, 45, 'pash_inner_hitam.jpg', 1, '2026-01-04 14:40:09', '2026-01-04 14:45:16', 0);
+
+--
+-- Triggers `produk_varian`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_auto_generate_sku` BEFORE INSERT ON `produk_varian` FOR EACH ROW BEGIN
+    DECLARE warna_code VARCHAR(4);
+    DECLARE model_code VARCHAR(10);
+    DECLARE counter INT DEFAULT 1;
+    DECLARE temp_sku VARCHAR(30);
+    
+    -- Jika Kode_SKU sudah diisi, skip
+    IF NEW.Kode_SKU IS NOT NULL AND NEW.Kode_SKU != '' THEN
+        -- Validasi format SKU yang diinput
+        IF NEW.Kode_SKU NOT REGEXP '^MDL-[0-9]{2}-[A-Z]{3,4}$' THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Format Kode_SKU tidak valid. Harus: MDL-XX-ABC';
+        END IF;
+    ELSE
+        -- Ambil kode model dari produk induk
+        SELECT Kode_Model INTO model_code
+        FROM produk_induk 
+        WHERE ID_Induk = NEW.ID_Induk;
+        
+        -- Ambil 3-4 karakter pertama dari nama warna
+        SELECT UPPER(LEFT(REPLACE(Nama_Warna, ' ', ''), 4)) INTO warna_code
+        FROM master_warna 
+        WHERE ID_Warna = NEW.ID_Warna;
+        
+        -- Generate SKU: MDL-01-BLK
+        SET temp_sku = CONCAT(model_code, '-', warna_code);
+        
+        -- Cek duplikat, jika ada tambah angka
+        WHILE EXISTS (SELECT 1 FROM produk_varian WHERE Kode_SKU = temp_sku) DO
+            SET temp_sku = CONCAT(model_code, '-', warna_code, '-', counter);
+            SET counter = counter + 1;
+        END WHILE;
+        
+        SET NEW.Kode_SKU = temp_sku;
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_prevent_delete_produk_terjual` BEFORE DELETE ON `produk_varian` FOR EACH ROW BEGIN
+    DECLARE transaction_count INT;
+    DECLARE error_msg VARCHAR(255);
+    
+    -- Cek apakah produk pernah terjual
+    SELECT COUNT(*) INTO transaction_count
+    FROM detail_transaksi
+    WHERE Kode_SKU = OLD.Kode_SKU;
+    
+    IF transaction_count > 0 THEN
+        SET error_msg = CONCAT(
+            'Tidak dapat menghapus produk "', 
+            OLD.Kode_SKU, 
+            '" karena sudah pernah terjual (', 
+            transaction_count, 
+            ' transaksi). Gunakan Is_Active = 0 untuk non-aktifkan.'
+        );
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_msg;
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_validasi_harga_jual` BEFORE UPDATE ON `produk_varian` FOR EACH ROW BEGIN
+    DECLARE log_message TEXT;
+    
+    -- Rule 1: Harga jual tidak boleh negatif
+    IF NEW.Harga_Jual < 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Harga jual tidak boleh negatif';
+    END IF;
+    
+    -- Rule 2: Harga tidak boleh turun drastis (>50%) - untuk audit
+    IF NEW.Harga_Jual < (OLD.Harga_Jual * 0.5) THEN
+        -- Masih diizinkan, tapi dicatat di log system
+        SET log_message = CONCAT(
+            'Penurunan harga drastis (>50%) untuk SKU: ', 
+            NEW.Kode_SKU, 
+            '. Dari: ', OLD.Harga_Jual, 
+            ' ke: ', NEW.Harga_Jual
+        );
+        
+        INSERT INTO system_logs 
+        (Message, Level, Created_At)
+        VALUES 
+        (log_message, 'WARNING', NOW());
+    END IF;
+    
+    -- Rule 3: Catat perubahan harga untuk audit
+    IF OLD.Harga_Jual != NEW.Harga_Jual THEN
+        INSERT INTO audit_price_changes 
+        (Kode_SKU, Old_Price, New_Price, Percentage_Change, Changed_By, Changed_At)
+        VALUES 
+        (
+            NEW.Kode_SKU, 
+            OLD.Harga_Jual, 
+            NEW.Harga_Jual,
+            ROUND(((NEW.Harga_Jual - OLD.Harga_Jual) / OLD.Harga_Jual) * 100, 2),
+            CURRENT_USER(),
+            NOW()
+        );
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_validasi_stok_minimum` BEFORE UPDATE ON `produk_varian` FOR EACH ROW BEGIN
+    DECLARE log_message TEXT;
+    
+    -- Rule 1: Stok tidak boleh negatif
+    IF NEW.Stok < 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Stok tidak boleh negatif';
+    END IF;
+    
+    -- Rule 2: Jika stok <= 5, catat sebagai warning (stok hampir habis)
+    IF NEW.Stok <= 5 AND OLD.Stok > 5 THEN
+        SET log_message = CONCAT(
+            'Stok hampir habis (<=5) untuk SKU: ', 
+            NEW.Kode_SKU, 
+            '. Stok saat ini: ', 
+            NEW.Stok
+        );
+        
+        INSERT INTO system_logs 
+        (Message, Level, Created_At)
+        VALUES 
+        (log_message, 'WARNING', NOW());
+    END IF;
+    
+    -- Rule 3: Catat perubahan stok manual (bukan dari transaksi)
+    IF OLD.Stok != NEW.Stok THEN
+        -- Cek apakah perubahan ini dari transaksi (baru saja)
+        IF NOT EXISTS (
+            SELECT 1 FROM log_stok_changes 
+            WHERE Kode_SKU = NEW.Kode_SKU 
+            AND Created_At > DATE_SUB(NOW(), INTERVAL 5 SECOND)
+        ) THEN
+            INSERT INTO audit_stock_changes 
+            (Kode_SKU, Old_Stock, New_Stock, Reason, Changed_By, Changed_At)
+            VALUES 
+            (
+                NEW.Kode_SKU, 
+                OLD.Stok, 
+                NEW.Stok, 
+                'MANUAL_ADJUSTMENT', 
+                CURRENT_USER(),
+                NOW()
+            );
+        END IF;
+    END IF;
+END
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `system_logs`
+--
+
+CREATE TABLE `system_logs` (
+  `ID_Log` int(11) NOT NULL,
+  `Message` text DEFAULT NULL,
+  `Level` enum('INFO','WARNING','ERROR') DEFAULT NULL,
+  `Created_At` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `system_logs`
+--
+
+INSERT INTO `system_logs` (`ID_Log`, `Message`, `Level`, `Created_At`) VALUES
+(1, 'Penurunan harga drastis (>50%) untuk SKU: MDL-01-BLK. Dari: 45000 ke: 20000', 'WARNING', '2026-01-04 14:41:02');
 
 -- --------------------------------------------------------
 
@@ -269,12 +630,34 @@ INSERT INTO `transaksi` (`No_Transaksi`, `ID_Pelanggan`, `Tanggal_Transaksi`, `N
 --
 
 --
+-- Indexes for table `audit_price_changes`
+--
+ALTER TABLE `audit_price_changes`
+  ADD PRIMARY KEY (`ID_Audit`),
+  ADD KEY `Kode_SKU` (`Kode_SKU`);
+
+--
+-- Indexes for table `audit_stock_changes`
+--
+ALTER TABLE `audit_stock_changes`
+  ADD PRIMARY KEY (`ID_Audit`),
+  ADD KEY `Kode_SKU` (`Kode_SKU`);
+
+--
 -- Indexes for table `detail_transaksi`
 --
 ALTER TABLE `detail_transaksi`
   ADD PRIMARY KEY (`ID_Detail`),
   ADD KEY `No_Transaksi` (`No_Transaksi`),
   ADD KEY `Kode_SKU` (`Kode_SKU`);
+
+--
+-- Indexes for table `log_stok_changes`
+--
+ALTER TABLE `log_stok_changes`
+  ADD PRIMARY KEY (`ID_Log`),
+  ADD KEY `Kode_SKU` (`Kode_SKU`),
+  ADD KEY `No_Transaksi` (`No_Transaksi`);
 
 --
 -- Indexes for table `master_bahan`
@@ -321,6 +704,12 @@ ALTER TABLE `produk_varian`
   ADD KEY `ID_Warna` (`ID_Warna`);
 
 --
+-- Indexes for table `system_logs`
+--
+ALTER TABLE `system_logs`
+  ADD PRIMARY KEY (`ID_Log`);
+
+--
 -- Indexes for table `transaksi`
 --
 ALTER TABLE `transaksi`
@@ -332,10 +721,28 @@ ALTER TABLE `transaksi`
 --
 
 --
+-- AUTO_INCREMENT for table `audit_price_changes`
+--
+ALTER TABLE `audit_price_changes`
+  MODIFY `ID_Audit` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `audit_stock_changes`
+--
+ALTER TABLE `audit_stock_changes`
+  MODIFY `ID_Audit` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `detail_transaksi`
 --
 ALTER TABLE `detail_transaksi`
   MODIFY `ID_Detail` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+
+--
+-- AUTO_INCREMENT for table `log_stok_changes`
+--
+ALTER TABLE `log_stok_changes`
+  MODIFY `ID_Log` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `master_bahan`
@@ -362,8 +769,26 @@ ALTER TABLE `produk_induk`
   MODIFY `ID_Induk` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
+-- AUTO_INCREMENT for table `system_logs`
+--
+ALTER TABLE `system_logs`
+  MODIFY `ID_Log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `audit_price_changes`
+--
+ALTER TABLE `audit_price_changes`
+  ADD CONSTRAINT `audit_price_changes_ibfk_1` FOREIGN KEY (`Kode_SKU`) REFERENCES `produk_varian` (`Kode_SKU`);
+
+--
+-- Constraints for table `audit_stock_changes`
+--
+ALTER TABLE `audit_stock_changes`
+  ADD CONSTRAINT `audit_stock_changes_ibfk_1` FOREIGN KEY (`Kode_SKU`) REFERENCES `produk_varian` (`Kode_SKU`);
 
 --
 -- Constraints for table `detail_transaksi`
@@ -371,6 +796,13 @@ ALTER TABLE `produk_induk`
 ALTER TABLE `detail_transaksi`
   ADD CONSTRAINT `detail_transaksi_ibfk_1` FOREIGN KEY (`No_Transaksi`) REFERENCES `transaksi` (`No_Transaksi`),
   ADD CONSTRAINT `detail_transaksi_ibfk_2` FOREIGN KEY (`Kode_SKU`) REFERENCES `produk_varian` (`Kode_SKU`);
+
+--
+-- Constraints for table `log_stok_changes`
+--
+ALTER TABLE `log_stok_changes`
+  ADD CONSTRAINT `log_stok_changes_ibfk_1` FOREIGN KEY (`Kode_SKU`) REFERENCES `produk_varian` (`Kode_SKU`),
+  ADD CONSTRAINT `log_stok_changes_ibfk_2` FOREIGN KEY (`No_Transaksi`) REFERENCES `transaksi` (`No_Transaksi`);
 
 --
 -- Constraints for table `produk_induk`

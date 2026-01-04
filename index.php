@@ -26,7 +26,7 @@ include __DIR__ . '/includes/header.php';
             <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
         </div>
         <div class="carousel-inner">
-            <div class="carousel-item active" style="background-image: url('https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=1920&q=80');">
+            <div class="carousel-item active" style="background-image: url('assets/images/products/hijab-pashmina.png');">
                 <div class="carousel-caption">
                     <h1 class="fade-in-up">Sakinah Style:<br>Anggun & Syar'i</h1>
                     <p class="fade-in-up">Temukan koleksi fashion muslimah terbaru dengan kualitas terbaik. Setiap produk dipilih dengan teliti untuk memberikan kenyamanan dan gaya yang elegan.</p>
@@ -35,7 +35,7 @@ include __DIR__ . '/includes/header.php';
                     </a>
                 </div>
             </div>
-            <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1583292650898-7d22cd27ca6f?w=1920&q=80');">
+            <div class="carousel-item" style="background-image: url('assets/images/products/hijab-segi-empat.png');">
                 <div class="carousel-caption">
                     <h1 class="fade-in-up">Koleksi Terbaru<br>Muslimah Modern</h1>
                     <p class="fade-in-up">Dari pashmina elegan hingga segi empat yang praktis, temukan gaya yang sesuai dengan kepribadian Anda.</p>
@@ -44,7 +44,7 @@ include __DIR__ . '/includes/header.php';
                     </a>
                 </div>
             </div>
-            <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1556306535-0f09a537f0a3?w=1920&q=80');">
+            <div class="carousel-item" style="background-image: url('assets/images/products/hijab-bergo.png');">
                 <div class="carousel-caption">
                     <h1 class="fade-in-up">Bahan Premium<br>Jahitan Berkualitas</h1>
                     <p class="fade-in-up">Setiap produk dibuat dengan bahan pilihan dan jahitan rapi untuk kenyamanan maksimal.</p>
@@ -73,7 +73,7 @@ include __DIR__ . '/includes/header.php';
             <div class="category-item hover-lift">
                 <a href="<?php echo SITE_URL; ?>/shop.php?kategori=1">
                     <div class="category-image">
-                        <img src="https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400&q=80" alt="Segi Empat">
+                        <img src="assets/images/products/hijab-segi-empat.png" alt="Segi Empat">
                     </div>
                     <h5>Segi Empat</h5>
                 </a>
@@ -81,7 +81,7 @@ include __DIR__ . '/includes/header.php';
             <div class="category-item hover-lift">
                 <a href="<?php echo SITE_URL; ?>/shop.php?kategori=2">
                     <div class="category-image">
-                        <img src="https://images.unsplash.com/photo-1583292650898-7d22cd27ca6f?w=400&q=80" alt="Pashmina">
+                        <img src="assets/images/products/hijab-pashmina.png" alt="Pashmina">
                     </div>
                     <h5>Pashmina</h5>
                 </a>
@@ -89,7 +89,7 @@ include __DIR__ . '/includes/header.php';
             <div class="category-item hover-lift">
                 <a href="<?php echo SITE_URL; ?>/shop.php?kategori=3">
                     <div class="category-image">
-                        <img src="https://images.unsplash.com/photo-1556306535-0f09a537f0a3?w=400&q=80" alt="Instan">
+                        <img src="assets/images/products/hijab-instan.png" alt="Instan">
                     </div>
                     <h5>Instan</h5>
                 </a>
@@ -97,9 +97,9 @@ include __DIR__ . '/includes/header.php';
             <div class="category-item hover-lift">
                 <a href="<?php echo SITE_URL; ?>/shop.php">
                     <div class="category-image">
-                        <img src="https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=400&q=80" alt="Accessories">
+                        <img src="assets/images/products/hijab-bergo.png" alt="Accessories">
                     </div>
-                    <h5>Accessories</h5>
+                    <h5>Bergo</h5>
                 </a>
             </div>
         </div>
@@ -277,22 +277,6 @@ include __DIR__ . '/includes/header.php';
                 </a>
             </div>
         <?php endif; ?>
-    </div>
-</section>
-
-<!-- Newsletter Section -->
-<section class="newsletter-section" style="background-image: url('https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=1920&q=80');">
-    <div class="container">
-        <div class="newsletter-content">
-            <h2>Dapatkan Update Koleksi Terbaru</h2>
-            <p class="mb-4">Berlangganan newsletter kami untuk mendapatkan informasi produk baru dan penawaran spesial</p>
-            <form class="newsletter-form" method="POST" action="#">
-                <input type="email" class="form-control" placeholder="Masukkan email Anda" required>
-                <button type="submit" class="btn-custom">
-                    <i class="bi bi-envelope"></i> Berlangganan
-                </button>
-            </form>
-        </div>
     </div>
 </section>
 

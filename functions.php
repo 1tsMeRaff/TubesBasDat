@@ -316,6 +316,7 @@ function getAllProducts($filters = []) {
     }
 }
 
+
 /**
  * Get Price Range for Products (Min and Max)
  * @return array ['min' => int, 'max' => int]
@@ -856,4 +857,3 @@ function processCheckout($data) {
     }
 }
 ?>
-
