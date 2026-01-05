@@ -1,35 +1,28 @@
 <?php
-// Middleware & database (PAKAI __DIR__)
 require_once __DIR__ . "/middleware/admin_auth.php";
 require_once __DIR__ . "/../config/database.php";
 
 // ================== QUERY STATISTIK ==================
+$qProduk     = mysqli_query($conn, "SELECT COUNT(*) AS total FROM produk_induk");
+$qVarian     = mysqli_query($conn, "SELECT COUNT(*) AS total FROM produk_varian");
+$qPelanggan  = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pelanggan");
+$qTransaksi  = mysqli_query($conn, "SELECT COUNT(*) AS total FROM transaksi");
+$qStok       = mysqli_query($conn, "SELECT SUM(stok) AS total FROM produk_varian");
 
-// Total produk induk
-$qProduk = mysqli_query($conn, "SELECT COUNT(*) AS total FROM produk_induk");
-$produk = mysqli_fetch_assoc($qProduk);
-
-// Total varian
-$qVarian = mysqli_query($conn, "SELECT COUNT(*) AS total FROM produk_varian");
-$varian = mysqli_fetch_assoc($qVarian);
-
-// Total pelanggan
-$qPelanggan = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pelanggan");
-$pelanggan = mysqli_fetch_assoc($qPelanggan);
-
-// Total transaksi
-$qTransaksi = mysqli_query($conn, "SELECT COUNT(*) AS total FROM transaksi");
-$transaksi = mysqli_fetch_assoc($qTransaksi);
-
-// Total stok
-$qStok = mysqli_query($conn, "SELECT SUM(stok) AS total FROM produk_varian");
-$stok = mysqli_fetch_assoc($qStok);
+$produk     = mysqli_fetch_assoc($qProduk);
+$varian     = mysqli_fetch_assoc($qVarian);
+$pelanggan  = mysqli_fetch_assoc($qPelanggan);
+$transaksi  = mysqli_fetch_assoc($qTransaksi);
+$stok       = mysqli_fetch_assoc($qStok);
 ?>
 
 <?php include __DIR__ . "/templates/header.php"; ?>
 
 <h1>Dashboard Admin</h1>
-<p>Selamat datang, <b><?= $_SESSION['admin_nama']; ?></b></p>
+<p>
+    Selamat datang, 
+    <b><?= htmlspecialchars($_SESSION['user']['name']); ?></b>
+</p>
 
 <div class="stats">
     <div class="card">
@@ -54,7 +47,7 @@ $stok = mysqli_fetch_assoc($qStok);
 
     <div class="card">
         <p>Total Stok</p>
-        <h2><?= $stok['total']; ?></h2>
+        <h2><?= $stok['total'] ?? 0; ?></h2>
     </div>
 </div>
 

@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $success = true;
             
             // Redirect to profile page after 2 seconds
-            header("Refresh: 2; url=profile.php");
+            header("Refresh: 2; url=profile");
             
         } catch (PDOException $e) {
             error_log("Error registering user: " . $e->getMessage());

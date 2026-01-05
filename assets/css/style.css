@@ -226,12 +226,19 @@ a:hover {
   margin: 0 0.5rem;
 }
 
+/* ===== NAVBAR LOGO ===== */
+.navbar .logo-navbar {
+  height: 10px;
+  width: auto;
+  object-fit: contain;
+}
+
 /* ==========================================
    NAVIGATION
    ========================================== */
 
 .navbar {
-  padding: 1rem 0;
+  padding: 0.5rem 0;
   background: rgba(255, 255, 255, 0.98) !important;
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -252,10 +259,27 @@ a:hover {
   font-family: var(--font-heading);
   font-size: 1.8rem;
   font-weight: 700;
+  line-height: 1;
   color: var(--primary-color) !important;
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+}
+
+#mainNavbar {
+  min-height: unset;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.navbar-brand {
+  line-height: 1;
+}
+
+.navbar-brand img.logo-navbar {
+  max-height: 16px;
+  width: auto;
+  object-fit: contain;
 }
 
 .navbar-brand:hover {
@@ -263,8 +287,7 @@ a:hover {
 }
 
 .navbar-brand img {
-  height: 40px;
-  margin-right: 10px;
+  height: auto;
 }
 
 .nav-link {

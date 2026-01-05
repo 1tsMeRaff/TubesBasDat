@@ -55,9 +55,18 @@ $cart_count = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light sticky-top" id="mainNavbar">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="<?php echo SITE_URL; ?>/index.php">
-                <i class="bi bi-scarf"></i> Sakinah Style
+            <a class="navbar-brand d-flex align-items-center fw-bold"
+                href="<?php echo SITE_URL; ?>/index.php">
+
+                <img src="<?php echo SITE_URL; ?>/assets/images/logo/sakinah-logo.png"
+                    alt="Sakinah Style"
+                    style="height:60px; width:auto; display:block;"
+                    class="me-2">
+
+                <span>Sakinah Style</span>
             </a>
+
+
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

@@ -12,7 +12,7 @@ $page_description = "Masuk ke akun Anda untuk melanjutkan belanja";
 
 // Redirect if already logged in
 if (isset($_SESSION['user'])) {
-    header('Location: profile.php');
+    header('Location: index');
     exit;
 }
 
@@ -62,10 +62,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // For now, we'll just use session
                 }
                 
-                // Redirect
-                $redirect = $_POST['redirect'] ?? 'profile.php';
-                header('Location: ' . $redirect);
-                exit;
+                // Redirect berdasarkan role
+                if (($user['Role'] ?? 'customer') === 'admin') {
+                    header('Location: ../admin/index.php');
+                } else {
+                header('Location: profile.php');
+                }
+            exit;
+ 
             } else {
                 $errors[] = "Email atau password salah";
             }
