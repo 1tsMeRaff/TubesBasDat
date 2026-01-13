@@ -1,32 +1,66 @@
 <?php
 require_once __DIR__ . "/../middleware/admin_auth.php";
 require_once __DIR__ . "/../../config/database.php";
-include __DIR__ . "/../templates/header.php";
 
-$data = mysqli_query($conn, "
-    SELECT * FROM log_stok_changes
-    ORDER BY Created_At DESC
+
+$query = mysqli_query($conn, "
+    SELECT * FROM transaksi
+    ORDER BY Tanggal_Transaksi DESC
 ");
 ?>
 
-<h1>Riwayat Transaksi</h1>
+<?php include __DIR__ . "/../templates/header.php"; ?>
 
-<table border="1" cellpadding="8">
-<tr>
-    <th>Kode SKU</th>
-    <th>Perubahan</th>
-    <th>Jumlah</th>
-    <th>Waktu</th>
-</tr>
+<div class="main-content">
+    <h2 class="page-title">Riwayat Transaksi</h2>
 
-<?php while($d = mysqli_fetch_assoc($data)): ?>
-<tr>
-    <td><?= $d['Kode_SKU'] ?></td>
-    <td><?= $d['Perubahan'] ?></td>
-    <td><?= $d['Jumlah'] ?></td>
-    <td><?= $d['Created_At'] ?></td>
-</tr>
-<?php endwhile; ?>
-</table>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>No Transaksi</th>
+                    <th>ID Pelanggan</th>
+                    <th>Tanggal</th>
+                    <th>Status</th>
+                    <th>Total Bayar</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            <?php if (mysqli_num_rows($query) > 0): ?>
+                <?php $no = 1; ?>
+                <?php while ($row = mysqli_fetch_assoc($query)): ?>
+                    <tr>
+                        <td><?= $no++; ?></td>
+                        <td><?= $row['No_Transaksi']; ?></td>
+                        <td><?= $row['ID_Pelanggan']; ?></td>
+                        <td><?= date('d-m-Y H:i', strtotime($row['Tanggal_Transaksi'])); ?></td>
+                        <td>
+                            <span class="badge <?= strtolower($row['Status_Transaksi']); ?>">
+                                <?= $row['Status_Transaksi']; ?>
+                            </span>
+                        </td>
+                        <td class="harga">
+                            Rp <?= number_format($row['Total_Bayar'], 0, ',', '.'); ?>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <tr class="empty-row">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            📦 <br>
+                            <strong>Belum ada transaksi</strong><br>
+                            Data transaksi akan muncul setelah ada pembelian.
+                        </div>
+                    </td>
+                </tr>
+            <?php endif; ?>
+
+            </tbody>
+        </table>
+    </div>
+</div>
 
 <?php include __DIR__ . "/../templates/footer.php"; ?>

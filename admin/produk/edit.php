@@ -1,72 +1,26 @@
 <?php
-require_once __DIR__ . "/middleware/admin_auth.php";
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../middleware/admin_auth.php";
+require_once __DIR__ . "/../../config/database.php";
 
-// ================== QUERY STATISTIK ==================
-$qProduk     = mysqli_query($conn, "SELECT COUNT(*) AS total FROM produk_induk");
-$qVarian     = mysqli_query($conn, "SELECT COUNT(*) AS total FROM produk_varian");
-$qPelanggan  = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pelanggan");
-$qTransaksi  = mysqli_query($conn, "SELECT COUNT(*) AS total FROM transaksi");
-$qStok       = mysqli_query($conn, "SELECT SUM(stok) AS total FROM produk_varian");
+$id = $_GET['id'];
+$q = mysqli_query($conn, "
+    SELECT * FROM produk_varian WHERE Kode_SKU='$id'
+");
+$data = mysqli_fetch_assoc($q);
 
-$produk     = mysqli_fetch_assoc($qProduk);
-$varian     = mysqli_fetch_assoc($qVarian);
-$pelanggan  = mysqli_fetch_assoc($qPelanggan);
-$transaksi  = mysqli_fetch_assoc($qTransaksi);
-$stok       = mysqli_fetch_assoc($qStok);
+include __DIR__ . "/../templates/header.php";
 ?>
 
-<?php include __DIR__ . "/templates/header.php"; ?>
+<h2>Edit Harga Produk</h2>
 
-<section class="section admin-dashboard">
-    <div class="container">
+<form method="POST" action="simpan_edit.php">
+    <input type="hidden" name="kode_sku" value="<?= $data['Kode_SKU'] ?>">
 
-        <div class="admin-header mb-4">
-            <h2 class="section-title">Dashboard Admin</h2>
-            <p class="text-muted">
-                Selamat datang, <strong><?= $_SESSION['admin_nama']; ?></strong>
-            </p>
-        </div>
+    <label>Harga Jual</label><br>
+    <input type="number" name="harga_jual" value="<?= $data['Harga_Jual'] ?>" required>
+    <br><br>
 
-        <div class="row g-4 stats">
+    <button type="submit">Simpan</button>
+</form>
 
-            <div class="col-lg-3 col-md-4 col-sm-6">
-                <div class="card stat-card">
-                    <p>Total Produk</p>
-                    <h2><?= $produk['total']; ?></h2>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-4 col-sm-6">
-                <div class="card stat-card">
-                    <p>Total Varian</p>
-                    <h2><?= $varian['total']; ?></h2>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-4 col-sm-6">
-                <div class="card stat-card">
-                    <p>Total Pelanggan</p>
-                    <h2><?= $pelanggan['total']; ?></h2>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-4 col-sm-6">
-                <div class="card stat-card">
-                    <p>Total Transaksi</p>
-                    <h2><?= $transaksi['total']; ?></h2>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-4 col-sm-6">
-                <div class="card stat-card">
-                    <p>Total Stok</p>
-                    <h2><?= $stok['total'] ?? 0; ?></h2>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</section>
-
-<?php include __DIR__ . "/templates/footer.php"; ?>
+<?php include __DIR__ . "/../templates/footer.php"; ?>

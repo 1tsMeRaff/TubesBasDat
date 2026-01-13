@@ -1,13 +1,18 @@
 <?php
-require_once __DIR__ . "/admin/middleware/admin_auth.php";
+require_once __DIR__ . "/../middleware/admin_auth.php";
 require_once __DIR__ . "/../../config/database.php";
 include __DIR__ . "/../templates/header.php";
+
 
 $query = mysqli_query($conn, "SELECT ID_Induk, Nama_Produk, ID_Kategori FROM produk_induk");
 ?>
 
 <h1>Manajemen Produk</h1>
-<a href="tambah.php">+ Tambah Produk</a>
+
+<div class="action-bar">
+  <a href="tambah.php" class="btn btn-success">+ Tambah Produk</a>
+</div>
+
 
 <table border="1" cellpadding="10">
     <tr>

@@ -141,3 +141,118 @@ button {
 button:hover {
   background: #1f6391;
 }
+
+/* ============================= */
+/* RIWAYAT TRANSAKSI (EMPTY) */
+/* ============================= */
+
+.empty-row td {
+  text-align: center;
+  padding: 50px 15px;
+  background-color: #fafafa;
+}
+
+.empty-state {
+  color: #777;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.empty-state strong {
+  display: block;
+  margin-top: 8px;
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+/* ============================= */
+/* BADGE STATUS TRANSAKSI */
+/* ============================= */
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  text-align: center;
+}
+
+/* Status Warna */
+.badge.pending {
+  background-color: #f1c40f;
+  color: #fff;
+}
+
+.badge.paid {
+  background-color: #2ecc71;
+  color: #fff;
+}
+
+.badge.sent {
+  background-color: #3498db;
+  color: #fff;
+}
+
+.badge.cancelled {
+  background-color: #e74c3c;
+  color: #fff;
+}
+
+/* ============================= */
+/* FORMAT HARGA */
+/* ============================= */
+
+td.harga {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* BUTTON LINK (ACTION BUTTON) */
+.btn {
+  display: inline-block;
+  padding: 10px 16px;
+  background: #2980b9;
+  color: #fff !important;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.25s;
+}
+
+.btn:hover {
+  background: #1f6391;
+  text-decoration: none;
+}
+
+/* BUTTON VARIANT */
+.btn-success {
+  background: #27ae60;
+}
+
+.btn-success:hover {
+  background: #1e8449;
+}
+
+.btn-warning {
+  background: #f39c12;
+}
+
+.btn-warning:hover {
+  background: #d68910;
+}
+
+.btn-danger {
+  background: #e74c3c;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+}
+
+/* BUTTON GROUP */
+.action-bar {
+  margin-bottom: 20px;
+}
+

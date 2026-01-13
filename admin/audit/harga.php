@@ -3,44 +3,31 @@ require_once __DIR__ . "/../middleware/admin_auth.php";
 require_once __DIR__ . "/../../config/database.php";
 include __DIR__ . "/../templates/header.php";
 
-$query = mysqli_query($conn, "
-    SELECT 
-        a.Changed_At,
-        pi.Nama_Produk,
-        a.Kode_SKU,
-        a.Old_Price,
-        a.New_Price,
-        a.Percentage_Change,
-        a.Changed_By
-    FROM audit_price_changes a
-    JOIN produk_varian pv ON a.Kode_SKU = pv.Kode_SKU
-    JOIN produk_induk pi ON pv.ID_Induk = pi.ID_Induk
-    ORDER BY a.Changed_At DESC
-");
+$q = mysqli_query($conn,
+    "SELECT * FROM audit_price_changes ORDER BY Changed_At DESC"
+);
 ?>
 
-<h1>Audit Perubahan Harga</h1>
+<h2>Audit Harga</h2>
 
-<table border="1" cellpadding="10" cellspacing="0">
+<table>
 <tr>
-    <th>Waktu</th>
-    <th>Produk</th>
     <th>SKU</th>
     <th>Harga Lama</th>
     <th>Harga Baru</th>
-    <th>Persentase</th>
-    <th>Diubah Oleh</th>
+    <th>Perubahan (%)</th>
+    <th>Admin</th>
+    <th>Waktu</th>
 </tr>
 
-<?php while($row = mysqli_fetch_assoc($query)): ?>
+<?php while ($r = mysqli_fetch_assoc($q)): ?>
 <tr>
-    <td><?= $row['Changed_At'] ?></td>
-    <td><?= $row['Nama_Produk'] ?></td>
-    <td><?= $row['Kode_SKU'] ?></td>
-    <td>Rp <?= number_format($row['Old_Price']) ?></td>
-    <td>Rp <?= number_format($row['New_Price']) ?></td>
-    <td><?= $row['Percentage_Change'] ?>%</td>
-    <td><?= $row['Changed_By'] ?></td>
+    <td><?= $r['Kode_SKU'] ?></td>
+    <td><?= $r['Old_Price'] ?></td>
+    <td><?= $r['New_Price'] ?></td>
+    <td><?= number_format($r['Percentage_Change'],2) ?>%</td>
+    <td><?= $r['Changed_By'] ?></td>
+    <td><?= $r['Changed_At'] ?></td>
 </tr>
 <?php endwhile; ?>
 </table>

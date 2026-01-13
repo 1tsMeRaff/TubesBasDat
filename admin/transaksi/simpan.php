@@ -1,44 +1,56 @@
 <?php
-require_once __DIR__ . "/../middleware/admin_auth.php";
+session_start();
 require_once __DIR__ . "/../../config/database.php";
 
-$kode_sku = $_POST['kode_sku'];
-$jumlah   = (int) $_POST['jumlah'];
-$admin    = $_SESSION['admin_nama'];
+$kodeSKU = $_POST['kode_sku'];
+$qty = (int) $_POST['qty'];
+$admin = $_SESSION['user']['name'];
 
-// Ambil stok lama
-$q = mysqli_query($conn, "SELECT Stok FROM produk_varian WHERE Kode_SKU='$kode_sku'");
-$data = mysqli_fetch_assoc($q);
+$noTransaksi = "TRX-" . time();
 
-$stok_lama = $data['Stok'];
+// Ambil harga & stok
+$q = mysqli_query($conn,
+    "SELECT Harga_Jual, Stok FROM produk_varian WHERE Kode_SKU='$kodeSKU'"
+);
+$p = mysqli_fetch_assoc($q);
 
-if ($jumlah > $stok_lama) {
-    die("Stok tidak mencukupi");
+$harga = $p['Harga_Jual'];
+$stokLama = $p['Stok'];
+
+if ($stokLama < $qty) {
+    die("Stok tidak cukup");
 }
 
-$stok_baru = $stok_lama - $jumlah;
+$subtotal = $harga * $qty;
+$stokBaru = $stokLama - $qty;
 
-// ================= UPDATE STOK =================
+// === SIMPAN TRANSAKSI ===
 mysqli_query($conn, "
-    UPDATE produk_varian 
-    SET Stok = $stok_baru 
-    WHERE Kode_SKU = '$kode_sku'
+    INSERT INTO transaksi (No_Transaksi, Total, Dibuat_Oleh)
+    VALUES ('$noTransaksi', '$subtotal', '$admin')
 ");
 
-// ================= AUDIT STOCK =================
+// === DETAIL ===
 mysqli_query($conn, "
-    INSERT INTO audit_stock_changes
-    (Kode_SKU, Old_Stock, New_Stock, Reason, Changed_By)
+    INSERT INTO transaksi_detail
+    (No_Transaksi, Kode_SKU, Qty, Harga, Subtotal)
     VALUES
-    ('$kode_sku', $stok_lama, $stok_baru, 'Penjualan', '$admin')
+    ('$noTransaksi', '$kodeSKU', '$qty', '$harga', '$subtotal')
 ");
 
-// ================= LOG STOCK =================
+// === UPDATE STOK ===
+mysqli_query($conn, "
+    UPDATE produk_varian
+    SET Stok='$stokBaru'
+    WHERE Kode_SKU='$kodeSKU'
+");
+
+// === LOG STOK ===
 mysqli_query($conn, "
     INSERT INTO log_stok_changes
-    (Kode_SKU, Perubahan, Jumlah)
+    (Kode_SKU, Perubahan, Jumlah, No_Transaksi)
     VALUES
-    ('$kode_sku', 'DECREASE', $jumlah)
+    ('$kodeSKU', 'DECREASE', '$qty', '$noTransaksi')
 ");
 
 header("Location: index.php");
